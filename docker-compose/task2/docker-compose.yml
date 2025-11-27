@@ -1,0 +1,27 @@
+services:
+  web:
+    build: .
+    container_name: wep_app
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_POST: 5432
+      DB_USER: admin
+      DB_PASSWORD: pass
+    ports:
+      - "8080:8000"
+
+  db:
+    image: postgres:16
+    container_name: simple_db
+    environment:
+      POSTGRES_DB: app_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  volumes:
+    db_data:
