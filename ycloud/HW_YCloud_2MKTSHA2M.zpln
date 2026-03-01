@@ -1,0 +1,312 @@
+﻿{
+  "paragraphs": [
+    {
+      "user": "anonymous",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1772356818462_1440351808",
+      "id": "paragraph_1772356818462_1440351808",
+      "dateCreated": "2026-03-01T09:20:18+0000",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:2578",
+      "text": "%spark.pyspark\nfrom pyspark.sql import functions as F\nusers = spark.createDataFrame(\n    [\n        (\"u1\", \"Berlin\"),\n        (\"u2\", \"Berlin\"),\n        (\"u3\", \"Munich\"),\n        (\"u4\", \"Hamburg\"),\n    ],\n    [\"user_id\", \"city\"]\n)\norders = spark.createDataFrame(\n    [\n        (\"o1\", \"u1\", \"p1\", 2, 10.0),\n        (\"o2\", \"u1\", \"p2\", 1, 30.0),\n        (\"o3\", \"u2\", \"p1\", 1, 10.0),\n        (\"o4\", \"u2\", \"p3\", 5, 7.0),\n        (\"o5\", \"u3\", \"p2\", 3, 30.0),\n        (\"o6\", \"u3\", \"p3\", 1, 7.0),\n        (\"o7\", \"u4\", \"p1\", 10, 10.0),\n    ],\n    [\"order_id\", \"user_id\", \"product_id\", \"qty\", \"price\"]\n)\nproducts = spark.createDataFrame(\n    [\n        (\"p1\", \"Ring VOLA\"),\n        (\"p2\", \"Ring POROG\"),\n        (\"p3\", \"Ring TISHINA\"),\n    ],\n    [\"product_id\", \"product_name\"]\n)\nusers.show()\norders.show()\nproducts.show()",
+      "dateUpdated": "2026-03-01T09:26:36+0000",
+      "dateFinished": "2026-03-01T09:26:37+0000",
+      "dateStarted": "2026-03-01T09:26:36+0000",
+      "title": "Подготовка данных"
+    },
+    {
+      "text": "%spark.pyspark\nrevenue = orders.withColumn(\"revenue\", F.col(\"qty\") * F.col(\"price\"))\nrevenue.show()",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-01T09:35:06+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1772356877158_1239777536",
+      "id": "paragraph_1772356877158_1239777536",
+      "dateCreated": "2026-03-01T09:21:17+0000",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:3032",
+      "dateFinished": "2026-03-01T09:35:07+0000",
+      "dateStarted": "2026-03-01T09:35:06+0000",
+      "title": "Посчитать revenue = qty * price"
+    },
+    {
+      "text": "%spark.pyspark\ndf_joined = (revenue.join(users, \"user_id\").join(products, \"product_id\"))\ndf_joined.show()",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-01T09:35:12+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1772357109344_1373307353",
+      "id": "paragraph_1772357109344_1373307353",
+      "dateCreated": "2026-03-01T09:25:09+0000",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:3324",
+      "dateFinished": "2026-03-01T09:35:13+0000",
+      "dateStarted": "2026-03-01T09:35:12+0000",
+      "title": "Объединить orders с users и products"
+    },
+    {
+      "text": "%spark.pyspark\nmart_aggregated = (df_joined\n                   .groupBy(\"city\", \"product_id\", \"product_name\")\n                   .agg(\n                       F.count(\"order_id\").alias(\"orders_cnt\"),\n                       F.sum(\"qty\").alias(\"qty_sum\"),\n                       F.sum(\"revenue\").alias(\"revenue_sum\")\n                   )\n                   .orderBy(\"city\", F.desc(\"revenue_sum\")))\n\nmart_aggregated.show()",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-01T09:38:37+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1772357259063_307944167",
+      "id": "paragraph_1772357259063_307944167",
+      "dateCreated": "2026-03-01T09:27:39+0000",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:3589",
+      "dateFinished": "2026-03-01T09:38:38+0000",
+      "dateStarted": "2026-03-01T09:38:37+0000",
+      "title": "Посчитать метрики по (city, product_id, product_name)"
+    },
+    {
+      "text": "%spark.pyspark\nwindow_spec = Window.partitionBy(\"city\").orderBy(F.desc(\"revenue_sum\"))\nmart_with_rank = mart_aggregated.withColumn(\n    \"rank\", \n    F.row_number().over(window_spec)\n)\nmart_top = mart_with_rank.filter(F.col(\"rank\") <= 2)\nmart_top.select(\n    \"city\", \"product_id\", \"product_name\", \n    \"orders_cnt\", \"qty_sum\", \"revenue_sum\", \"rank\"\n).orderBy(\"city\", \"rank\").show()",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-01T09:50:04+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1772357276787_949195449",
+      "id": "paragraph_1772357276787_949195449",
+      "dateCreated": "2026-03-01T09:27:56+0000",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:3670",
+      "dateFinished": "2026-03-01T09:50:05+0000",
+      "dateStarted": "2026-03-01T09:50:04+0000",
+      "title": "Для каждого города выбрать Top-2 товара по revenue_sum используя Window"
+    },
+    {
+      "text": "%spark.pyspark\noutput_path = \"/tmp/sandbox_zeppelin/mart_city_top_products\"\nmart_top.write.mode(\"overwrite\").parquet(output_path)",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-01T09:58:56+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "https://ui-c9qvg07tcuvo81ik6siq-rc1b-dataproc-d-vkf3mgvura56ituk-37631.dataproc-ui.yandexcloud.net/jobs/job?id=95",
+              "$$hashKey": "object:5824"
+            },
+            {
+              "jobUrl": "https://ui-c9qvg07tcuvo81ik6siq-rc1b-dataproc-d-vkf3mgvura56ituk-37631.dataproc-ui.yandexcloud.net/jobs/job?id=96",
+              "$$hashKey": "object:5825"
+            },
+            {
+              "jobUrl": "https://ui-c9qvg07tcuvo81ik6siq-rc1b-dataproc-d-vkf3mgvura56ituk-37631.dataproc-ui.yandexcloud.net/jobs/job?id=97",
+              "$$hashKey": "object:5826"
+            },
+            {
+              "jobUrl": "https://ui-c9qvg07tcuvo81ik6siq-rc1b-dataproc-d-vkf3mgvura56ituk-37631.dataproc-ui.yandexcloud.net/jobs/job?id=99",
+              "$$hashKey": "object:5827"
+            },
+            {
+              "jobUrl": "https://ui-c9qvg07tcuvo81ik6siq-rc1b-dataproc-d-vkf3mgvura56ituk-37631.dataproc-ui.yandexcloud.net/jobs/job?id=100",
+              "$$hashKey": "object:5828"
+            },
+            {
+              "jobUrl": "https://ui-c9qvg07tcuvo81ik6siq-rc1b-dataproc-d-vkf3mgvura56ituk-37631.dataproc-ui.yandexcloud.net/jobs/job?id=101",
+              "$$hashKey": "object:5829"
+            },
+            {
+              "jobUrl": "https://ui-c9qvg07tcuvo81ik6siq-rc1b-dataproc-d-vkf3mgvura56ituk-37631.dataproc-ui.yandexcloud.net/jobs/job?id=102",
+              "$$hashKey": "object:5830"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1772357308159_843682524",
+      "id": "paragraph_1772357308159_843682524",
+      "dateCreated": "2026-03-01T09:28:28+0000",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:3755",
+      "dateFinished": "2026-03-01T09:58:57+0000",
+      "dateStarted": "2026-03-01T09:58:56+0000",
+      "title": "Записать результат в s3 и в HDFS",
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      }
+    },
+    {
+      "text": "%spark.pyspark\nmart = spark.read.parquet(output_path)\nmart.orderBy(\"city\", \"rank\").show()",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-01T09:59:02+0000",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1772357345532_1060533633",
+      "id": "paragraph_1772357345532_1060533633",
+      "dateCreated": "2026-03-01T09:29:05+0000",
+      "status": "FINISHED",
+      "focus": true,
+      "$$hashKey": "object:3871",
+      "dateFinished": "2026-03-01T09:59:02+0000",
+      "dateStarted": "2026-03-01T09:59:02+0000",
+      "title": "Прочитать обратно и показать топ-результат"
+    }
+  ],
+  "name": "HW_YCloud",
+  "id": "2MKTSHA2M",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.10.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false,
+    "looknfeel": "default",
+    "personalizedMode": "false"
+  },
+  "info": {},
+  "path": "/HW_YCloud"
+}
