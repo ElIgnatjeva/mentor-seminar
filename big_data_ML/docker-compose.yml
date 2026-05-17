@@ -1,0 +1,172 @@
+services:
+  # PostgreSQL для хранения исходных данных и витрин
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: analytics_db
+      POSTGRES_USER: analytics_user
+      POSTGRES_PASSWORD: analytics_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./init_postgres/:/docker-entrypoint-initdb.d/
+    networks:
+      - analytics_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analytics_user -d analytics_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO для data lake хранения
+  minio:
+    image: minio/minio:latest
+    container_name: minio_storage
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"  # API port
+      - "9001:9001"  # Console port
+    volumes:
+      - minio_data:/data
+    networks:
+      - analytics_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Создание buckets в MinIO
+  minio-init:
+    image: minio/mc
+    container_name: minio_init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      mc alias set myminio http://minio:9000 minioadmin minioadmin123;
+      mc mb myminio/raw-data;
+      mc mb myminio/processed-data;
+      mc mb myminio/marts;
+      mc policy set download myminio/raw-data;
+      exit 0;
+      "
+    networks:
+      - analytics_network
+
+  # ETL сервис на Python
+  # etl_service:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.etl
+  #   container_name: etl_processor
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #   environment:
+  #     POSTGRES_HOST: postgres
+  #     POSTGRES_DB: analytics_db
+  #     POSTGRES_USER: analytics_user
+  #     POSTGRES_PASSWORD: analytics_pass
+  #     MINIO_ENDPOINT: minio:9000
+  #     MINIO_ACCESS_KEY: minioadmin
+  #     MINIO_SECRET_KEY: minioadmin123
+  #   volumes:
+  #     - ./etl_scripts:/app/etl_scripts
+  #     - ./logs:/app/logs
+  #   networks:
+  #     - analytics_network
+
+  # Apache Superset для визуализации
+# Упрощенный Superset без Redis
+  superset-simple:
+    image: apache/superset:4.0.0
+    container_name: superset_simple
+    environment:
+      SUPERSET_SECRET_KEY: 'secret-key-change-me'
+      SUPERSET_SQLALCHEMY_DATABASE_URI: postgresql://analytics_user:analytics_pass@postgres:5434/analytics_db
+    ports:
+      - "8088:8088"
+    depends_on:
+      - postgres
+    volumes:
+      - superset_data:/app/superset_home
+    networks:
+      - analytics_network
+    command: >
+      sh -c "
+      pip install psycopg2-binary &&
+      superset db upgrade &&
+      superset fab create-admin --username admin --password admin --firstname Admin --lastname User --email admin@example.com &&
+      superset init &&
+      superset run -h 0.0.0.0 -p 8088
+      "
+
+  # JupyterHub для разработки и анализа
+  jupyterhub:
+    image: jupyterhub/jupyterhub:latest
+    container_name: jupyterhub
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./jupyter_config:/srv/jupyterhub
+      - ./notebooks:/srv/notebooks
+      - ./data:/srv/data
+      - jupyterhub_data:/srv/jupyterhub/data
+    environment:
+      DOCKER_JUPYTER_IMAGE: jupyter/base-notebook:latest
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      - analytics_network
+    command: >
+      sh -c "
+      pip install jupyterlab pandas numpy sqlalchemy psycopg2-binary boto3 minio matplotlib seaborn scikit-learn &&
+      jupyterhub --config /srv/jupyterhub/jupyterhub_config.py
+      "
+
+  # Jupyter Notebook для одиночного использования (альтернатива JupyterHub)
+  jupyter:
+    image: jupyter/datascience-notebook:latest
+    container_name: jupyter_notebook
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_ENABLE_LAB: 'yes'
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: analytics_db
+      POSTGRES_USER: analytics_user
+      POSTGRES_PASSWORD: analytics_pass
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+    volumes:
+      - ./notebooks:/home/jovyan/work/notebooks
+      - ./data:/home/jovyan/work/data
+      - ./etl_scripts:/home/jovyan/work/etl_scripts
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      - analytics_network
+    command: >
+      start-notebook.sh --NotebookApp.token=''
+
+networks:
+  analytics_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
+  superset_data:
+  jupyterhub_data:
