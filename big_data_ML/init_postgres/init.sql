@@ -601,3 +601,21 @@ VALUES
 ('Ekaterinburg Station', 56.8389, 60.6057, 13300),
 ('Astrakhan Station', 46.3497, 48.0408, 8700);
 
+CREATE table if not exists marts.vibration_before_failure AS
+SELECT
+s.pump_id,
+extract(
+epoch from
+(
+f.failure_date-s.timestamp
+)
+)/3600 hours_to_failure,
+s.vibration
+FROM staging.pump_sensors s
+JOIN staging.pump_failures f
+ON s.pump_id=f.pump_id
+WHERE
+s.timestamp<
+f.failure_date
+AND s.timestamp>
+f.failure_date-interval '24 hour';
